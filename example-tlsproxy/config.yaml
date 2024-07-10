@@ -1,0 +1,18 @@
+acceptTOS: true
+cacheDir: /tmp
+email: inbox@saberistic.com
+
+httpAddr: ":80"
+tlsAddr: ":10443"
+
+backends:
+  - serverNames:
+    - eternis2.saberistic.com
+    mode: tls
+    addresses:
+    - 3.162.112.123:443
+    - 3.162.112.117:443
+    - 3.162.112.46:443
+    - 3.162.112.36:443
+    insecureSkipVerify: true
+    forwardServerName: brave.com

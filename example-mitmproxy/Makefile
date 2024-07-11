@@ -18,7 +18,7 @@ all: run
 .PHONY: image
 image: $(image_tar)
 
-$(image_tar): Dockerfile config.yaml start.sh
+$(image_tar): Dockerfile addon.py start.sh
 	docker run \
 		-v $(PWD):/workspace \
 		gcr.io/kaniko-project/executor:v1.9.2 \

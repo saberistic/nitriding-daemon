@@ -143,6 +143,15 @@ func (*nitroAttester) createAttstn(aux auxInfo) ([]byte, error) {
 		return nil, errNoAttstnFromNSM
 	}
 
+	//get pcr
+	res2, err := s.Send(&request.DescribePCR{
+		Index: 0,
+	})
+	if err != nil {
+		return nil, err
+	}
+	elog.Printf("DescribePCR request:\n %+v\n", res2)
+
 	return res.Attestation.Document, nil
 }
 

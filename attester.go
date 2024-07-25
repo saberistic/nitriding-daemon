@@ -144,23 +144,17 @@ func (*nitroAttester) createAttstn(aux auxInfo) ([]byte, error) {
 	}
 
 	//get pcr
-	pcr0, _ := s.Send(&request.DescribePCR{
-		Index: 0,
-	})
 
-	pcr1, _ := s.Send(&request.DescribePCR{
-		Index: 1,
-	})
-	pcr2, _ := s.Send(&request.DescribePCR{
-		Index: 2,
-	})
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-	elog.Printf("DescribePCR pcr0:\n %+v\n", pcr0)
-	elog.Printf("DescribePCR pcr1:\n %+v\n", pcr1)
-	elog.Printf("DescribePCR pcr2:\n %+v\n", pcr2)
+	for i := uint16(0); i <= 4; i++ {
+		pcrRes, err := s.Send(&request.DescribePCR{
+			Index: i,
+		})
+		if err != nil {
+			elog.Printf("Error describing PCR %d: %v", i, err)
+			continue
+		}
+		elog.Printf("DescribePCR pcr%d:\n %+v\n", i, pcrRes)
+	}
 
 	return res.Attestation.Document, nil
 }

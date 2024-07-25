@@ -159,6 +159,8 @@ func (*nitroAttester) verifyAttstn(doc []byte, ourNonce nonce) (auxInfo, error) 
 	// Verify that the remote enclave's PCR values (e.g., the image ID) are
 	// identical to ours.
 	ourPCRs, err := getPCRValues()
+	elog.Printf("ourPCRS: \n %+v\n", ourPCRs)
+	elog.Printf("their PCRS: \n %+v\n", their.Document.PCRs)
 	if err != nil {
 		return nil, err
 	}

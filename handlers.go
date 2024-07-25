@@ -226,7 +226,7 @@ func attestationHandler(useProfiling bool, hashes *AttestationHashes, a attester
 			http.Error(w, errFailedAttestation.Error(), http.StatusInternalServerError)
 			return
 		}
-		elog.Printf("sssss %+v\n", aux)
+		elog.Printf("aux %+v\n", aux)
 		elog.Printf("aho")
 		fmt.Fprintln(w, b64Doc)
 		fmt.Fprintln(w, "\n============")

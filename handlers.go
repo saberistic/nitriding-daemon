@@ -221,6 +221,12 @@ func attestationHandler(useProfiling bool, hashes *AttestationHashes, a attester
 			return
 		}
 		b64Doc := base64.StdEncoding.EncodeToString(rawDoc)
+		aux, err := a.verifyAttstn(rawDoc, n)
+		if err != nil {
+			http.Error(w, errFailedAttestation.Error(), http.StatusInternalServerError)
+			return
+		}
+		elog.Printf("sssss %+v\n", aux)
 		fmt.Fprintln(w, b64Doc)
 	}
 }

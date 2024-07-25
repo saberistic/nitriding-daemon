@@ -227,7 +227,7 @@ func attestationHandler(useProfiling bool, hashes *AttestationHashes, a attester
 			return
 		}
 		elog.Printf("aux %+v\n", aux)
-		elog.Printf("aho")
+		elog.Printf("ahe")
 		fmt.Fprintln(w, b64Doc)
 		fmt.Fprintln(w, "\n============")
 		fmt.Fprintln(w, aux)

@@ -143,6 +143,19 @@ func (*nitroAttester) createAttstn(aux auxInfo) ([]byte, error) {
 		return nil, errNoAttstnFromNSM
 	}
 
+	//get pcr
+
+	for i := uint16(0); i <= 4; i++ {
+		pcrRes, err := s.Send(&request.DescribePCR{
+			Index: i,
+		})
+		if err != nil {
+			elog.Printf("Error describing PCR %d: %v", i, err)
+			continue
+		}
+		elog.Printf("DescribePCR pcr%d:\n %+v\n", i, pcrRes)
+	}
+
 	return res.Attestation.Document, nil
 }
 
@@ -159,6 +172,8 @@ func (*nitroAttester) verifyAttstn(doc []byte, ourNonce nonce) (auxInfo, error) 
 	// Verify that the remote enclave's PCR values (e.g., the image ID) are
 	// identical to ours.
 	ourPCRs, err := getPCRValues()
+	elog.Printf("ourPCRS: \n %+v\n", ourPCRs)
+	elog.Printf("their PCRS: \n %+v\n", their.Document.PCRs)
 	if err != nil {
 		return nil, err
 	}

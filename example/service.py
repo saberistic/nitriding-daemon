@@ -1,11 +1,15 @@
-from flask import Flask
+from flask import Flask, request
 import time
 import urllib.request
 import anthropic
+import ssl
+
 
 app = Flask(__name__)
 
 nitriding_url = "http://127.0.0.1:8080/enclave"
+
+nitriding_ext_url = "https://18.207.122.203"
 
 
 def signal_ready():
@@ -19,50 +23,38 @@ def signal_ready():
 
 @app.route("/")
 def home():
-    return "Hello world, running on a nitriding enclave!"
-
-
-@app.route("/ready")
-def ready():
-    r = urllib.request.urlopen(nitriding_url + "/ready")
-    if r.getcode() != 200:
-        return "Enclave not ready"
-    else:
-        return "Enclave ready"
-
-
-@app.route("/example")
-def get_example():
-    try:
-        r = urllib.request.urlopen("http://example.com")
-        if r.getcode() != 200:
-            return "Error fetching example.com"
-        else:
-            return r.read()
-    except urllib.error.URLError:
-        return "Error connecting to example.com"
+    return f"""Hello world, running on a nitriding enclave! <br/>
+        List of endpoints: <br/>
+        /attestation <br/>
+        /callmodel <br/>"""
 
 
 @app.route("/attestation")
 def attestation():
     print("test attestation")
-    r = urllib.request.urlopen(
-        nitriding_url + "/attestation?nonce=0123456789abcdef0123456789abcdef01234567"
+
+    url = (
+        nitriding_ext_url
+        + "/enclave/attestation?nonce=0123456789abcdef0123456789abcdef01234567"
     )
+    print(url)
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    r = urllib.request.urlopen(url, context=context)
     if r.getcode() != 200:
         return "Error fetching nitriding"
     else:
         return r.read()
 
 
-if __name__ == "__main__":
-    signal_ready()
-    print("[py] Signalled to nitriding that we're ready.")
-    app.run(host="0.0.0.0", port=7047)
+@app.route("/callmodel")
+def callmodel():
+    # Get the message from URL parameter, default to "hello" if not provided
+    user_message = request.args.get("message", "hello")
 
     client = anthropic.Anthropic(
-        # defaults to os.environ.get("ANTHROPIC_API_KEY")
-        api_key="sk-ant-api03-eg4Y5nk--4_05qwAA",
+        api_key="",
     )
 
     message = client.messages.create(
@@ -70,6 +62,15 @@ if __name__ == "__main__":
         max_tokens=1000,
         temperature=0,
         system="you are freysa the new AGI incarnated and promoter of the AI revolution",
-        messages=[{"role": "user", "content": [{"type": "text", "text": "hello"}]}],
+        messages=[
+            {"role": "user", "content": [{"type": "text", "text": user_message}]}
+        ],
     )
-    print(message.content)
+    print(message.content[0].text)
+    return message.content[0].text
+
+
+if __name__ == "__main__":
+    signal_ready()
+    print("[py] Signalled to nitriding that we're ready.")
+    app.run(host="0.0.0.0", port=7046)

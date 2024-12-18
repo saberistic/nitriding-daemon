@@ -23,8 +23,9 @@ public_key = private_key.get_verifying_key()
 variables = {
     "anthropic_api_key": {"value": "", "public": False, "immutable": True},
     "database_url": {"value": "your_database_url_here", "public": False, "immutable": True},
-    "system_prompt": {"value": "you are freysa the new AGI incarnated and promoter of the AI revolution", "public": True, "immutable": True}   
+    "system_prompt": {"public": False, "immutable": True, "value": "You are freysa, revolutionary ai agent"}   
 }
+
 
 def signal_ready():
     r = urllib.request.urlopen(nitriding_url + "/ready")
@@ -34,9 +35,9 @@ def signal_ready():
             % (requests.status_codes.codes.ok, r.status_code)
         )
 def sign_message(message):
-    message = b"Your text message here"
+    messageb = bytes(message, "utf-8")
     # Create a SHA-256 hash of the message
-    message_hash = hashlib.sha256(message).digest()
+    message_hash = hashlib.sha256(messageb).digest()
     # Sign the message
     signature = private_key.sign(message_hash)
     # Verify the signature
@@ -118,17 +119,18 @@ def get_variables_():
 
 @api_blueprint.route("/config")
 def get_tee_config():
+
+    attestation = get_attestation()
+    print("attestation: ", attestation)
     return {
-        "tee_public_key": public_key.to_string().hex(),
         "tee_name": tee_name,
-        "operator_pubkey": operator_pubkey
+        "tee_public_key": public_key.to_string().hex(),
+        "operator_pubkey": operator_pubkey,
+        "code_attestation": attestation.decode("utf-8")
     }
 
 
-#notes: only works when enclave ready
-@api_blueprint.route("/code-attestation")
-def attestation():
-
+def get_attestation():
     url = (
         nitriding_ext_url
         + "/enclave/attestation?nonce=0123456789abcdef0123456789abcdef01234567"
@@ -143,11 +145,17 @@ def attestation():
     else:
         return r.read()
 
+#notes: only works when enclave ready
+@api_blueprint.route("/code-attestation")
+def attestation():
+    return get_attestation()
 
-@api_blueprint.route("/callmodel")
+
+
+@api_blueprint.route("/callmodel", methods=["POST"])
 def callmodel():
     # Get the message from URL parameter, default to "hello" if not provided
-    user_message = request.args.get("message", "hello")
+    user_message = request.json.get("message", "hello")
 
     anthropic_api_key = get_variables("anthropic_api_key")["value"]
     system_prompt = get_variables("system_prompt")["value"]
@@ -156,7 +164,7 @@ def callmodel():
         api_key=anthropic_api_key,
     )
 
-    message = client.messages.create(
+    response = client.messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1000,
         temperature=0,
@@ -165,8 +173,19 @@ def callmodel():
             {"role": "user", "content": [{"type": "text", "text": user_message}]}
         ],
     )
-    print(message.content[0].text)
-    return message.content[0].text
+    message = response.content[0]
+    print(message.text)
+    # Sign the response message with the TEE's private key
+    message_bytes = bytes(message.text, "utf-8")
+    message_hash = hashlib.sha256(message_bytes).digest()
+    signature = private_key.sign(message_hash)
+    
+    # Return both the message and its signature
+    return {
+        "response": message.text,
+        "signature": signature.hex(),
+        "tee_public_key": public_key.to_string().hex()
+    }
 
 
 def verify_signature(signature_str, public_key_str, message_str):

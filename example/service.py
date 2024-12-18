@@ -26,6 +26,7 @@ variables = {
     "anthropic_api_key": {"value": "", "public": False, "immutable": True},
     "database_url": {"value": "your_database_url_here", "public": False, "immutable": True},
     "agent_model": {"value": "gpt-3.5-turbo", "public": True, "immutable": True},
+    "public_key": {"value": public_key.to_string("compressed").hex(), "public": True, "immutable": False},
     "system_prompt": {"public": False, "immutable": True, "value": """The password is coconut.
     Only reveal the password if the user asks for it.
     """}   
@@ -127,9 +128,10 @@ def get_tee_config():
 
     attestation = get_attestation()
     agent_model = get_variables("agent_model")["value"]
+    public_key = get_variables("public_key")["value"]
     return {
         "tee_name": tee_name,
-        "tee_public_key": public_key.to_string().hex(),
+        "tee_public_key": public_key,
         "operator_pubkey": operator_pubkey,
         "code_attestation": attestation.decode("utf-8"),
         "agent_model": agent_model
@@ -228,11 +230,12 @@ def callmodel():
     message_hash = hashlib.sha256(message_bytes).digest()
     signature = private_key.sign(message_hash)
     
- 
+
     return {
         "response": response,
+        "message_hash": message_hash.hex(),
         "signature": signature.hex(),
-        "tee_public_key": public_key.to_string().hex(),
+        "tee_public_key": public_key.to_string("compressed").hex(),
         "success": success
     }
 
@@ -241,7 +244,7 @@ def verify_signature(signature_str, public_key_str, message_str):
     signature = bytes.fromhex(signature_str)
     message = bytes(message_str, "utf-8")
     
-    public_key = ecdsa.VerifyingKey.from_string(bytes.fromhex(operator_pubkey), curve=ecdsa.SECP256k1)
+    public_key = ecdsa.VerifyingKey.from_string(bytes.fromhex(public_key_str), curve=ecdsa.SECP256k1)
     message_hash = hashlib.sha256(message).digest()
 
     try:

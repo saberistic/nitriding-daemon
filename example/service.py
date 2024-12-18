@@ -6,6 +6,7 @@ import ssl
 import ecdsa
 import hashlib
 from openai import OpenAI
+import json
 
 
 app = Flask(__name__)
@@ -216,8 +217,9 @@ def callmodel():
     if chat_completion.choices[0].message.tool_calls:
         tool_call = chat_completion.choices[0].message.tool_calls[0]
         response = tool_call.function.arguments
+        response = json.loads(response)["password"]
         success = True
-    
+
     else:
         response = chat_completion.choices[0].message.content
         success = False

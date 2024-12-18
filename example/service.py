@@ -5,6 +5,7 @@ import anthropic
 import ssl
 import ecdsa
 import hashlib
+import openai
 
 
 app = Flask(__name__)
@@ -157,32 +158,31 @@ def callmodel():
     # Get the message from URL parameter, default to "hello" if not provided
     user_message = request.json.get("message", "hello")
 
-    anthropic_api_key = get_variables("anthropic_api_key")["value"]
+    openai_api_key = get_variables("anthropic_api_key")["value"]
     system_prompt = get_variables("system_prompt")["value"]
-    print("callmodel", anthropic_api_key)
-    client = anthropic.Anthropic(
-        api_key=anthropic_api_key,
-    )
+    print("callmodel", openai_api_key)
 
-    response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
-        max_tokens=1000,
-        temperature=0,
-        system=system_prompt,
+    # Initialize the OpenAI client
+    openai.api_key = openai_api_key
+
+    # Create a response using OpenAI's ChatGPT
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # Specify the model you want to use
         messages=[
-            {"role": "user", "content": [{"type": "text", "text": user_message}]}
+            {"role": "user", "content": user_message},
         ],
     )
-    message = response.content[0]
-    print(message.text)
+    
+    message = response.choices[0].message['content']  # Adjusted to access the response correctly
+    print(message)
     # Sign the response message with the TEE's private key
-    message_bytes = bytes(message.text, "utf-8")
+    message_bytes = bytes(message, "utf-8")
     message_hash = hashlib.sha256(message_bytes).digest()
     signature = private_key.sign(message_hash)
     
     # Return both the message and its signature
     return {
-        "response": message.text,
+        "response": message,
         "signature": signature.hex(),
         "tee_public_key": public_key.to_string().hex()
     }

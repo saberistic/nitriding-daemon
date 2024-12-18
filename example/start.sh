@@ -8,7 +8,7 @@ sleep 1
 
 cd bin
 
-pip3 install flask anthropic ecdsa
+pip3 install flask anthropic ecdsa openai
 
 python3 service.py
 

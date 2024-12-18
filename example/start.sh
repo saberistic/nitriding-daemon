@@ -8,7 +8,7 @@ sleep 1
 
 cd bin
 
-pip3 install flask anthropic
+pip3 install flask anthropic ecdsa
 
 python3 service.py
 

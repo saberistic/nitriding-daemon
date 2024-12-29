@@ -24,14 +24,15 @@ private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
 public_key = private_key.get_verifying_key()
 
 def pubkey_to_eth_address(public_key):
-    public_key_hex = public_key.to_string("compressed").hex()
-    keccak_hash = keccak(bytes.fromhex(public_key_hex))
+    keccak_hash = keccak(bytes.fromhex(public_key))
     eth_address = "0x" + keccak_hash[-20:].hex()
     return eth_address
 
 variables = {
     "private_key": {"value": private_key, "public": False, "immutable": True},
-    "public_key": {"value": pubkey_to_eth_address(public_key), "public": True, "immutable": True},
+    "public_key": {"value": pubkey_to_eth_address(public_key.to_string("compressed").hex()), "public": True, "immutable": True},
+    "operator_pubkey": {"value":   pubkey_to_eth_address(operator_pubkey), "public": True, "immutable": True},
+
     "secret_token": {"value": "", "public": False, "immutable": True},
 
     
@@ -300,13 +301,22 @@ def test_operator_sign(operator_pkey_str, function, variable, value):
 
 app.register_blueprint(api_blueprint)
 if __name__ == "__main__":
+    print("====================================")
+    print("🤖 Starting TEE-Agent")
+    print("🔑 operator_pubkey: ", variables["operator_pubkey"]["value"])
+    print("🔑 agent private_key: ", variables["private_key"]["value"])
+    print("🔑 agent public_key: ", variables["public_key"]["value"])
+    print("====================================")
+
     try:
         signal_ready()
+        print("[py] Signalled to nitriding that we're ready.")
     except Exception as e:
         print(f"Error during signal_ready: {e} \n Are you running inside an enclave?")
 
+
+
     
-    print("[py] Signalled to nitriding that we're ready.")
     app.run(host="0.0.0.0", port=port)
 
 

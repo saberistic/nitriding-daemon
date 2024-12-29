@@ -38,8 +38,8 @@ variables = {
     
     "agent_model": {"value": "gpt-4o", "public": True, "immutable": True},
 
-    "anthropic_api_key": {"value": "", "public": False, "immutable": True},
-    "database_url": {"value": "your_database_url_here", "public": False, "immutable": True},
+    "anthropic_api_key": {"value": "", "public": False, "immutable": False},
+    "database_url": {"value": "your_database_url_here", "public": False, "immutable": False},
     
 
     "system_prompt": {"public": False, "immutable": True, "value": """The password is coconut.

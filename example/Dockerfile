@@ -17,6 +17,8 @@ RUN chmod 0755      /bin/service.py /bin/start.sh
 
 FROM python:3.12-slim-bullseye
 
+RUN pip install flask anthropic ecdsa eth-hash[pycryptodome] eth_account web3
+
 # Copy all our files to the final image.
 COPY --from=builder /nitriding-daemon/nitriding /bin/start.sh /bin/service.py /bin/
 

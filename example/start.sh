@@ -5,5 +5,11 @@ echo "[sh] Started nitriding."
 
 sleep 1
 
-service.py
+
+cd bin
+
+pip3 install flask anthropic ecdsa openai json
+
+python3 service.py
+
 echo "[sh] Ran Python script."
